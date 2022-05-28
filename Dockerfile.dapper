@@ -1,0 +1,20 @@
+FROM registry.suse.com/bci/bci-base:15.3
+
+ARG DAPPER_HOST_ARCH
+ENV ARCH $DAPPER_HOST_ARCH
+
+RUN zypper -n in git-core curl tar gzip docker wget awk hostname xz && \
+    zypper -n clean -a && \
+    rm -rf /tmp/* /var/tmp/* /usr/share/doc/packages/*
+
+RUN curl -sL https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz | tar xvJf - -C /usr/local/bin --strip-components=1
+
+ENV DAPPER_ENV REPO TAG DRONE_TAG CROSS
+ENV DAPPER_SOURCE /rancher-cleanup
+ENV DAPPER_OUTPUT ./bin ./dist
+ENV DAPPER_DOCKER_SOCKET true
+ENV HOME ${DAPPER_SOURCE}
+WORKDIR ${DAPPER_SOURCE}
+
+ENTRYPOINT ["./scripts/entry"]
+CMD ["ci"]
