@@ -1,4 +1,8 @@
 #!/bin/bash
+# Overridden on package
+SCRIPT_VERSION="unreleased"
+echo "Running cleanup.sh version ${SCRIPT_VERSION}"
+
 # Warning
 echo "==================== WARNING ===================="
 echo "THIS WILL DELETE ALL RESOURCES CREATED BY RANCHER"

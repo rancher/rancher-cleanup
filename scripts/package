@@ -8,6 +8,9 @@ cd $(dirname $0)/..
 mkdir -p dist/artifacts
 cp ./cleanup.sh ./verify.sh dist/artifacts/
 
+sed -i -e 's/unreleased/'"$VERSION"'/' cleanup.sh
+sed -i -e 's/unreleased/'"$VERSION"'/' verify.sh
+
 IMAGE=${REPO}/rancher-cleanup:${TAG}
 DOCKERFILE=package/Dockerfile
 if [ -e ${DOCKERFILE}.${ARCH} ]; then
