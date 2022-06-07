@@ -1,4 +1,8 @@
-#!/bin/sh
+#!/bin/bash
+# Overridden on package
+SCRIPT_VERSION="unreleased"
+echo "Running verify.sh version ${SCRIPT_VERSION}"
+
 kcg()
 {
   kubectl get --ignore-not-found=true "$@"
