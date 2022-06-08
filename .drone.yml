@@ -96,7 +96,7 @@ steps:
     instance:
     - drone-publish.rancher.io
     ref:
-      include:
+      exclude:
       - "refs/tags/*rc*"
       - "refs/tags/*alpha*"
     event:
