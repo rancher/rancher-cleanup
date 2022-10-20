@@ -101,7 +101,7 @@ fi
 set -x
 # Namespaces with resources that probably have finalizers/dependencies (needs manual traverse to patch and delete else it will hang)
 CATTLE_NAMESPACES="local cattle-system cattle-impersonation-system cattle-global-data cattle-global-nt"
-TOOLS_NAMESPACES="istio-system cattle-resources-system cis-operator-system cattle-dashboards cattle-gatekeeper-system cattle-alerting cattle-logging cattle-pipeline cattle-prometheus rancher-operator-system cattle-monitoring-system cattle-logging-system"
+TOOLS_NAMESPACES="istio-system cattle-resources-system cis-operator-system cattle-dashboards cattle-gatekeeper-system cattle-alerting cattle-logging cattle-pipeline cattle-prometheus rancher-operator-system cattle-monitoring-system cattle-logging-system cattle-elemental-system"
 FLEET_NAMESPACES="cattle-fleet-clusters-system cattle-fleet-local-system cattle-fleet-system fleet-default fleet-local fleet-system"
 
 # Delete rancher install to not have anything running that (re)creates resources
@@ -193,6 +193,11 @@ kubectl get clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.nam
   kcd "clusterrolebindings ""$CRB"""
 done
 
+kubectl get clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^elemental | while read -r CRB; do
+  kcpf clusterrolebindings "$CRB"
+  kcd "clusterrolebindings ""$CRB"""
+done
+
 kubectl  get clusterroles -l cattle.io/creator=norman --no-headers -o custom-columns=NAME:.metadata.name | while read -r CR; do
   kcpf clusterroles "$CR"
   kcd "clusterroles ""$CR"""
@@ -248,15 +253,20 @@ kubectl get clusterroles --no-headers -o custom-columns=NAME:.metadata.name | gr
   kcd "clusterroles ""$CR"""
 done
 
+kubectl get clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^elemental | while read -r CR; do
+  kcpf clusterroles "$CR"
+  kcd "clusterroles ""$CR"""
+done
+
 # Bulk delete data CRDs
 # Saves time in the loop below where we patch/delete individual resources
-DATACRDS="settings.management.cattle.io authconfigs.management.cattle.io features.management.cattle.io rkeaddons.management.cattle.io rkek8sserviceoptions.management.cattle.io rkek8ssystemimages.management.cattle.io catalogtemplateversions.management.cattle.io catalogtemplates.management.cattle.io rkeaddons.management.cattle.io tokens.management.cattle.io"
+DATACRDS="settings.management.cattle.io authconfigs.management.cattle.io features.management.cattle.io rkeaddons.management.cattle.io rkek8sserviceoptions.management.cattle.io rkek8ssystemimages.management.cattle.io catalogtemplateversions.management.cattle.io catalogtemplates.management.cattle.io rkeaddons.management.cattle.io tokens.management.cattle.io elemental.cattle.io"
 for CRD in $DATACRDS; do
   kcd "crd $CRD"
 done
 
 # Delete apiservice
-for APISERVICE in $(kubectl  get apiservice -o name | grep cattle | grep -v k3s\.cattle\.io | grep -v helm\.cattle\.io) $(kubectl  get apiservice -o name | grep gatekeeper\.sh) $(kubectl  get apiservice -o name | grep istio\.io) apiservice\.apiregistration\.k8s\.io\/v1beta1\.custom\.metrics\.k8s\.io; do
+for APISERVICE in $(kubectl  get apiservice -o name | grep cattle | grep -v k3s\.cattle\.io | grep -v helm\.cattle\.io) $(kubectl  get apiservice -o name | grep gatekeeper\.sh) $(kubectl  get apiservice -o name | grep istio\.io) $(kubectl  get apiservice elemental-operator) apiservice\.apiregistration\.k8s\.io\/v1beta1\.custom\.metrics\.k8s\.io; do
   kcd "$APISERVICE"
 done
 
