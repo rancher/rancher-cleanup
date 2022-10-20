@@ -1,6 +1,6 @@
-FROM registry.suse.com/bci/bci-base:15.3
+FROM registry.suse.com/bci/bci-base:15.4.27.14.1
 
-ARG KUBERNETES_RELEASE=v1.21.12
+ARG KUBERNETES_RELEASE=v1.23.13
 WORKDIR /usr/local/bin
 RUN set -x \
  && zypper -n install curl \
