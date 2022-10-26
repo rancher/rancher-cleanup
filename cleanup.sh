@@ -250,7 +250,7 @@ done
 
 # Bulk delete data CRDs
 # Saves time in the loop below where we patch/delete individual resources
-DATACRDS="settings.management.cattle.io authconfigs.management.cattle.io features.management.cattle.io rkeaddons.management.cattle.io rkek8sserviceoptions.management.cattle.io rkek8ssystemimages.management.cattle.io catalogtemplateversions.management.cattle.io catalogtemplates.management.cattle.io rkeaddons.management.cattle.io"
+DATACRDS="settings.management.cattle.io authconfigs.management.cattle.io features.management.cattle.io rkeaddons.management.cattle.io rkek8sserviceoptions.management.cattle.io rkek8ssystemimages.management.cattle.io catalogtemplateversions.management.cattle.io catalogtemplates.management.cattle.io rkeaddons.management.cattle.io tokens.management.cattle.io"
 for CRD in $DATACRDS; do
   kcd "crd $CRD"
 done
