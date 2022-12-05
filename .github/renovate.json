@@ -1,0 +1,12 @@
+{
+  "baseBranches": ["main"],
+  "rebaseWhen": "conflicted",
+  "labels": ["dependencies"],
+  "prHourlyLimit": 2,
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["registry.suse.com/bci/bci-"],
+      "groupName": "BCI images"
+    }
+  ]
+}
