@@ -25,6 +25,7 @@ kcg apiservice -o name | grep cattle\.io | grep -v k3s\.cattle\.io | grep -v hel
 kcg apiservice -o name | grep istio
 kcg apiservice -o name | grep gatekeeper
 kcg apiservice -o name | grep custom\.metrics\.k8s\.io
+kcg apiservice -o name | grep elemental
 
 kcg clusterrolebinding -l cattle.io/creator=norman
 kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^cattle-
@@ -35,6 +36,7 @@ kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep
 kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^gatekeeper
 kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^cis
 kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^istio
+kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^elemental
 
 kcg clusterroles -l cattle.io/creator=norman
 kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^cattle-
@@ -47,6 +49,7 @@ kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^moni
 kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^gatekeeper
 kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^cis
 kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^istio
+kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^elemental
 
 kcg podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-logging
 kcg podsecuritypolicy.policy/rancher-logging-rke-aggregator
@@ -74,6 +77,7 @@ kcg namespace -o name | grep "^user-"
 kcg namespace -o name | grep "^u-"
 kcg namespace -o name | grep "fleet"
 kcg namespace -o name | grep "istio"
+kcg namespace -o name | grep "elemental"
 
 kcg "$(kubectl api-resources --namespaced=true --verbs=delete -o name | grep logging\.banzaicloud\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o custom-columns=NAME:.metadata.name,NAMESPACE:.metadata.namespace,KIND:.kind,APIVERSION:.apiVersion 2>/dev/null
 kcg "$(kubectl api-resources --namespaced=true --verbs=delete -o name | grep -v events\.events\.k8s\.io | grep -v ^events$ | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o custom-columns=NAME:.metadata.name,NAMESPACE:.metadata.namespace,KIND:.kind,APIVERSION:.apiVersion | grep rancher-monitoring 2>/dev/null
