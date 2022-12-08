@@ -7,13 +7,33 @@ platform:
   arch: amd64
 
 steps:
-- name: build
+- name: build-pr
   image: rancher/dapper:v0.5.8
   commands:
   - dapper ci
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  when:
+    event:
+    - pull_request
+
+- name: build-push-tag
+  image: rancher/dapper:v0.5.8
+  commands:
+  - dapper ci
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  when:
+    instance:
+      - drone-publish.rancher.io
+    ref:
+      include:
+        - "refs/heads/main"
+        - "refs/tags/v*"
+    event:
+    - push
 
 - name: github_binary_prerelease
   image: plugins/github-release

@@ -3,8 +3,8 @@ on:
   # Allows manual/automated ad-hoc trigger
   workflow_dispatch:
   # Run twice in the early morning for initial and follow up steps (create pull request and merge)
-  #schedule:
-  #  - cron: '30 4 * * *'
+  schedule:
+    - cron: '30 4 * * *'
   #  - cron: '30 6 * * *'
 jobs:
   renovate:
