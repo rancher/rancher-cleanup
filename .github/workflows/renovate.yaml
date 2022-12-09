@@ -2,6 +2,11 @@ name: Renovate
 on:
   # Allows manual/automated ad-hoc trigger
   workflow_dispatch:
+    inputs:
+      logLevel:
+        description: "Override default log level"
+        required: false
+        default: "info"
   # Run twice in the early morning for initial and follow up steps (create pull request and merge)
   schedule:
     - cron: '30 4 * * *'
@@ -35,7 +40,7 @@ jobs:
           RENOVATE_GIT_AUTHOR: "renovate-rancher <119870437+renovate-rancher[bot]@users.noreply.github.com>"
           # Use GitHub API to create commits (this allows for signed commits from GitHub App)
           RENOVATE_PLATFORM_COMMIT: "true"
-          #LOG_LEVEL: "debug"
+          LOG_LEVEL: ${{ inputs.logLevel || 'info' }}
         with:
           configurationFile: .github/renovate.json
           token: '${{ steps.get_token.outputs.token }}'
