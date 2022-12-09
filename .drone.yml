@@ -8,7 +8,7 @@ platform:
 
 steps:
 - name: build-pr
-  image: rancher/dapper:v0.5.8
+  image: rancher/dapper:1.12.1
   commands:
   - dapper ci
   volumes:
@@ -19,7 +19,7 @@ steps:
     - pull_request
 
 - name: build-push-tag
-  image: rancher/dapper:v0.5.8
+  image: rancher/dapper:1.12.1
   commands:
   - dapper ci
   volumes:
