@@ -139,7 +139,7 @@ platform:
 
 steps:
 - name: manifest-prerelease
-  image: plugins/manifest:1.0.2
+  image: plugins/manifest:1.2.3
   settings:
     username:
       from_secret: docker_username
@@ -160,7 +160,7 @@ steps:
     - tag
 
 - name: manifest
-  image: plugins/manifest:1.0.2
+  image: plugins/manifest:1.2.3
   settings:
     username:
       from_secret: docker_username
@@ -181,7 +181,7 @@ steps:
     - tag
 
 - name: manifest-latest
-  image: plugins/manifest:1.0.2
+  image: plugins/manifest:1.2.3
   settings:
     username:
       from_secret: docker_username
