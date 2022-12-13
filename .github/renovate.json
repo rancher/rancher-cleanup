@@ -13,7 +13,6 @@
     },
     {
       "matchPackagePatterns": ["rancher/dapper"],
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "allowedVersions": "<1.0.0",
       "automerge": true,
       "schedule": ["every weekend after 4am"]
