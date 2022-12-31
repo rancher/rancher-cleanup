@@ -48,6 +48,13 @@ if [ "$1" != "force" ]; then
     fi
 fi
 
+# example: keep clusterApi and istio related resources
+# bash cleanup.sh force clusterApi,istio
+mapfile -t skipped < <(echo "$2" | tr ',' ' ')
+for var in ${skipped[*]}; do
+  echo "$var"
+done
+
 kcd()
 {
     i="0"
@@ -326,11 +333,13 @@ kubectl get "$(kubectl api-resources --namespaced=true --verbs=delete -o name| g
   kcd "-n ""$NAMESPACE"" ${KIND}.$(printapiversion "$APIVERSION") ""$NAME"""
 done
 
-# Cluster-api
-kubectl get "$(kubectl api-resources --namespaced=true --verbs=delete -o name| grep cluster\.x-k8s\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o custom-columns=NAME:.metadata.name,NAMESPACE:.metadata.namespace,KIND:.kind,APIVERSION:.apiVersion | while read -r NAME NAMESPACE KIND APIVERSION; do
-  kcpf -n "$NAMESPACE" "${KIND}.$(printapiversion "$APIVERSION")" "$NAME"
-  kcd "-n ""$NAMESPACE"" ${KIND}.$(printapiversion "$APIVERSION") ""$NAME"""
-done
+if [[ ! "${skipped[*]}" =~ "clusterApi" ]]; then
+  # Cluster-api
+  kubectl get "$(kubectl api-resources --namespaced=true --verbs=delete -o name| grep cluster\.x-k8s\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o custom-columns=NAME:.metadata.name,NAMESPACE:.metadata.namespace,KIND:.kind,APIVERSION:.apiVersion | while read -r NAME NAMESPACE KIND APIVERSION; do
+    kcpf -n "$NAMESPACE" "${KIND}.$(printapiversion "$APIVERSION")" "$NAME"
+    kcd "-n ""$NAMESPACE"" ${KIND}.$(printapiversion "$APIVERSION") ""$NAME"""
+  done
+fi
 
 # Get all non-namespaced resources and delete in loop
 kubectl get "$(kubectl api-resources --namespaced=false --verbs=delete -o name| grep cattle\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o name | while read -r NAME; do
@@ -430,10 +439,12 @@ for CRD in $(kubectl get crd -o name | grep istio\.io); do
   kcd "$CRD"
 done
 
-# Delete cluster-api CRDs
-for CRD in $(kubectl get crd -o name | grep cluster\.x-k8s\.io); do
-  kcd "$CRD"
-done
+if [[ ! "${skipped[*]}" =~ "clusterApi" ]]; then
+  # Delete cluster-api CRDs
+  for CRD in $(kubectl get crd -o name | grep cluster\.x-k8s\.io); do
+    kcd "$CRD"
+  done
+fi
 
 # Delete all cattle CRDs
 # Exclude helm.cattle.io and addons.k3s.cattle.io to not break RKE2 addons
