@@ -51,9 +51,9 @@ fi
 # example: keep clusterApi and istio related resources
 # bash cleanup.sh force clusterApi,istio
 mapfile -t skipped < <(echo "$2" | tr ',' ' ')
-for var in ${skipped[*]}; do
-  echo "$var"
-done
+#for var in ${skipped[*]}; do
+#  echo "$var"
+#done
 
 kcd()
 {
