@@ -1,6 +1,4 @@
 name: Renovate
-# Allow one workflow to be run at the same time
-concurrency: renovate
 on:
   workflow_dispatch:
     inputs:
