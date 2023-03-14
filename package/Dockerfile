@@ -1,4 +1,4 @@
-FROM registry.suse.com/bci/bci-base:15.4.27.14.36
+FROM registry.suse.com/bci/bci-base:15.4.27.14.39
 
 ARG KUBERNETES_RELEASE=v1.23.13
 WORKDIR /usr/local/bin
