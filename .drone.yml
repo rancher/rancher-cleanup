@@ -34,6 +34,7 @@ steps:
         - "refs/tags/v*"
     event:
     - push
+    - tag
 
 - name: github_binary_prerelease
   image: plugins/github-release
