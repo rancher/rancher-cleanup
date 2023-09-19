@@ -1,10 +1,10 @@
 FROM registry.suse.com/bci/bci-base:15.5.36.5.33
 
-ARG KUBERNETES_RELEASE=v1.23.13
+ENV KUBECTL_VERSION v1.23.13
 WORKDIR /usr/local/bin
 RUN set -x \
  && zypper -n install curl \
- && curl -fsSLO https://storage.googleapis.com/kubernetes-release/release/${KUBERNETES_RELEASE}/bin/linux/amd64/kubectl \
+ && curl -LO https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
  && chmod +x kubectl
 
 COPY cleanup.sh /usr/local/bin/cleanup.sh
