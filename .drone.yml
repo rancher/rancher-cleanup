@@ -102,17 +102,19 @@ steps:
     - tag
 
 - name: docker-publish
-  image: plugins/docker
-  settings:
-    dockerfile: package/Dockerfile
-    password:
-      from_secret: docker_password
-    repo: "rancher/rancher-cleanup"
-    tags:
-      - "${DRONE_TAG}-amd64"
-      - "latest-amd64"
-    username:
+  image: rancher/dapper:v0.6.0
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  commands:
+  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+  - docker push docker.io/rancher/rancher-cleanup:$DRONE_TAG-amd64
+  - docker push docker.io/rancher/rancher-cleanup:latest-amd64
+  environment:
+    DOCKER_USERNAME:
       from_secret: docker_username
+    DOCKER_PASSWORD:
+      from_secret: docker_password
   when:
     instance:
     - drone-publish.rancher.io
