@@ -1,4 +1,4 @@
-FROM registry.suse.com/bci/bci-base:15.5.36.5.34
+FROM registry.suse.com/bci/bci-base:15.5.36.5.37
 
 ENV KUBECTL_VERSION v1.25.14
 WORKDIR /usr/local/bin
