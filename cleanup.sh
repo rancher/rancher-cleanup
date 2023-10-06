@@ -271,30 +271,40 @@ for APISERVICE in $(kubectl  get apiservice -o name | grep cattle | grep -v k3s\
 done
 
 # Pod security policies
-# Rancher logging
-for PSP in $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-logging) podsecuritypolicy.policy/rancher-logging-rke-aggregator; do
-  kcd "$PSP"
-done
+#Check if psps are available on the target cluster
+kubectl get podsecuritypolicy > /dev/null 2>&1
 
-# Rancher monitoring
-for PSP in $(kubectl  get podsecuritypolicy -o name -l release=rancher-monitoring) $(kubectl get podsecuritypolicy -o name -l app=rancher-monitoring-crd-manager) $(kubectl get podsecuritypolicy -o name -l app=rancher-monitoring-patch-sa) $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/instance=rancher-monitoring); do
-  kcd "$PSP"
-done
+# Check the exit code and only run if there are psps available on the cluster
+if [ $? -ne 0 ]; then
+  echo "Removing PSPs"
 
-# Rancher OPA
-for PSP in $(kubectl  get podsecuritypolicy -o name -l release=rancher-gatekeeper) $(kubectl get podsecuritypolicy -o name -l app=rancher-gatekeeper-crd-manager); do
-  kcd "$PSP"
-done
+  # Rancher logging
+  for PSP in $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-logging) podsecuritypolicy.policy/rancher-logging-rke-aggregator; do
+    kcd "$PSP"
+  done
 
-# Backup restore operator
-for PSP in $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-backup); do
-  kcd "$PSP"
-done
+  # Rancher monitoring
+  for PSP in $(kubectl  get podsecuritypolicy -o name -l release=rancher-monitoring) $(kubectl get podsecuritypolicy -o name -l app=rancher-monitoring-crd-manager) $(kubectl get podsecuritypolicy -o name -l app=rancher-monitoring-patch-sa) $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/instance=rancher-monitoring); do
+    kcd "$PSP"
+  done
 
-# Istio
-for PSP in istio-installer istio-psp kiali-psp psp-istio-cni; do
-  kcd "podsecuritypolicy $PSP"
-done
+  # Rancher OPA
+  for PSP in $(kubectl  get podsecuritypolicy -o name -l release=rancher-gatekeeper) $(kubectl get podsecuritypolicy -o name -l app=rancher-gatekeeper-crd-manager); do
+    kcd "$PSP"
+  done
+
+  # Backup restore operator
+  for PSP in $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-backup); do
+    kcd "$PSP"
+  done
+
+  # Istio
+  for PSP in istio-installer istio-psp kiali-psp psp-istio-cni; do
+    kcd "podsecuritypolicy $PSP"
+  done
+else 
+  echo "Kubernetes version v1.25 or higher, skipping PSP removal"
+fi
 
 # Get all namespaced resources and delete in loop
 # Exclude helm.cattle.io and k3s.cattle.io to not break K3S/RKE2 addons
