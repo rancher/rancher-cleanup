@@ -51,22 +51,33 @@ kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^cis
 kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^istio
 kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^elemental
 
-kcg podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-logging
-kcg podsecuritypolicy.policy/rancher-logging-rke-aggregator
 
-kcg podsecuritypolicy -o name -l release=rancher-monitoring
-kcg podsecuritypolicy -o name -l app=rancher-monitoring-crd-manager
-kcg podsecuritypolicy -o name -l app=rancher-monitoring-patch-sa
-kcg podsecuritypolicy -o name -l app.kubernetes.io/instance=rancher-monitoring
+# Pod security policies
+#Check if psps are available on the target cluster
+kubectl get podsecuritypolicy > /dev/null 2>&1
 
-kcg podsecuritypolicy -o name -l release=rancher-gatekeeper
-kcg podsecuritypolicy -o name -l app=rancher-gatekeeper-crd-manager
+# Check the exit code and only run if there are psps available on the cluster
+if [ $? -ne 0 ]; then
+  echo "Checking for PSPs"
+  kcg podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-logging
+  kcg podsecuritypolicy.policy/rancher-logging-rke-aggregator
 
-kcg podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-backup
-kcg podsecuritypolicy -o name | grep istio-installer
-kcg podsecuritypolicy -o name | grep istio-psp
-kcg podsecuritypolicy -o name | grep kiali-psp
-kcg podsecuritypolicy -o name | grep psp-istio-cni
+  kcg podsecuritypolicy -o name -l release=rancher-monitoring
+  kcg podsecuritypolicy -o name -l app=rancher-monitoring-crd-manager
+  kcg podsecuritypolicy -o name -l app=rancher-monitoring-patch-sa
+  kcg podsecuritypolicy -o name -l app.kubernetes.io/instance=rancher-monitoring
+
+  kcg podsecuritypolicy -o name -l release=rancher-gatekeeper
+  kcg podsecuritypolicy -o name -l app=rancher-gatekeeper-crd-manager
+
+  kcg podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-backup
+  kcg podsecuritypolicy -o name | grep istio-installer
+  kcg podsecuritypolicy -o name | grep istio-psp
+  kcg podsecuritypolicy -o name | grep kiali-psp
+  kcg podsecuritypolicy -o name | grep psp-istio-cni
+else 
+  echo "Kubernetes version v1.25 or higher, skipping PSP check"
+fi
 
 kcg namespace -o name | grep "^cattle"
 kcg namespace -o name | grep "rancher-operator-system"
