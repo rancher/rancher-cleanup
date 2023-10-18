@@ -11,6 +11,10 @@ This script will delete all Kubernetes resources belonging to/created by Rancher
 
 ## Using the cleanup script
 
+### Configuration options
+
+* Setting the environment variable `IGNORE_ISTIO` will ignore deleting Istio resources in `cleanup.sh` and will ignore checking Istio resources in `verify.sh`.
+
 ### Run as a Kubernetes Job
 
 * Deploy the job using `kubectl create -f deploy/rancher-cleanup.yaml`
