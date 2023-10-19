@@ -1,6 +1,6 @@
 FROM registry.suse.com/bci/bci-base:15.5.36.5.43
 
-ENV KUBECTL_VERSION v1.25.14
+ENV KUBECTL_VERSION v1.25.15
 WORKDIR /usr/local/bin
 RUN set -x \
  && zypper -n install curl \
