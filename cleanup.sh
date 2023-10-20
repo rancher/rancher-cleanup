@@ -65,7 +65,7 @@ kcpf()
   if [ "x${FINALIZERS}" != "x" ]; then
       echo "Finalizers before for ${*}: ${FINALIZERS}"
       kubectl patch -p '{"metadata":{"finalizers":null}}' --type=merge "$@"
-      echo "Finalizers after for ${*}: $(kubectl get -o jsonpath="{.metadata.finalizers}" "${*}")"
+      echo "Finalizers after for ${*}: $(kubectl get -o jsonpath="{.metadata.finalizers}" "${@}")"
   fi
 }
 
