@@ -1,4 +1,4 @@
-FROM registry.suse.com/bci/bci-base:15.5.36.5.47
+FROM registry.suse.com/bci/bci-base:15.5.36.11.16
 
 ARG DAPPER_HOST_ARCH
 ENV ARCH $DAPPER_HOST_ARCH
