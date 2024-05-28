@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# This script requires the following environment variables to be set:
+# TAG: the remote tag that you want the release to be based off of
+# GH_REPO: the github repo to create the release on, in <owner>/<repo> format
+
+set -e
+
+if [ -z "$TAG" ]; then
+  echo "Must specify TAG environment variable"
+  exit 1
+fi
+if [ -z "$GH_REPO" ]; then
+  echo "Must specify GH_REPO environment variable"
+  exit 1
+fi
+
+# create checksum file
+CHECKSUM_FILE='sha256sum-amd64.txt'
+sha256sum cleanup.sh > $CHECKSUM_FILE
+sha256sum verify.sh >> $CHECKSUM_FILE
+
+if echo "$TAG" | grep -Eq "rc|alpha"; then
+  gh release create --verify-tag --generate-notes --prerelease --latest=false "$TAG" cleanup.sh verify.sh $CHECKSUM_FILE
+else
+  gh release create --verify-tag --generate-notes "$TAG" cleanup.sh verify.sh $CHECKSUM_FILE
+fi
