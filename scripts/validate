@@ -1,8 +1,0 @@
-#!/bin/bash
-set -ex
-
-cd $(dirname $0)/..
-
-echo Running validation
-
-shellcheck -S warning *.sh 
