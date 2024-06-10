@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      imageTag:
+        description: Base Image Tag (before the :)
+        type: string
+        required: false
+        default: rancher/rancher-cleanup
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run shellcheck
+        run: |
+          sudo apt install shellcheck
+          shellcheck -S warning *.sh
+
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build docker image
+        run: docker build -t ${{ github.repository_owner }}/rancher-cleanup:test .
+
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      - shellcheck
+      - test-build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Get dockerhub username and password from vault
+        if: ${{ github.repository == 'rancher/rancher-cleanup' }}
+        uses: rancher-eio/read-vault-secrets@main
+        with:
+          secrets: |
+            secret/data/github/repo/${{ github.repository }}/dockerhub/${{ github.repository_owner }}/credentials username | DOCKER_USERNAME ;
+            secret/data/github/repo/${{ github.repository }}/dockerhub/${{ github.repository_owner }}/credentials password | DOCKER_PASSWORD
+
+      - name: Log into Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USERNAME || secrets.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD || secrets.DOCKER_PASSWORD }}
+
+      - name: Create github release
+        run: scripts/github-release
+        env:
+          TAG: ${{ github.ref_name }}
+          GH_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push docker image (prerelease)
+        if: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'alpha') }}
+        uses: docker/build-push-action@v5
+        env:
+          IMAGE_TAG: ${{ inputs.imageTag || github.repository }}
+        with:
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGE_TAG }}:${{ github.ref_name }}
+            ${{ env.IMAGE_TAG }}:${{ github.ref_name }}-amd64
+
+      - name: Build and push docker image (full release)
+        if: ${{ !contains(github.ref_name, 'rc') && !contains(github.ref_name, 'alpha') }}
+        uses: docker/build-push-action@v5
+        env:
+          IMAGE_TAG: ${{ inputs.imageTag || github.repository }}
+        with:
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGE_TAG }}:${{ github.ref_name }}
+            ${{ env.IMAGE_TAG }}:${{ github.ref_name }}-amd64
+            ${{ env.IMAGE_TAG }}:latest
+            ${{ env.IMAGE_TAG }}:latest-amd64

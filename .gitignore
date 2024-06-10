@@ -11,3 +11,4 @@ backup-restore-operator
 test-backup-location-local/
 .DS_Store
 /backups
+sha256sum-amd64.txt
