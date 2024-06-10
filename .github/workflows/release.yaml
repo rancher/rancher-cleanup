@@ -32,6 +32,8 @@ jobs:
         run: docker build -t ${{ github.repository_owner }}/rancher-cleanup:test .
 
   release:
+    permissions:
+      id-token: write
     runs-on: ubuntu-latest
     needs:
       - shellcheck
