@@ -71,7 +71,7 @@ jobs:
 
       - name: Build and push docker image (prerelease)
         if: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'alpha') }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         env:
           IMAGE_TAG: ${{ inputs.imageTag || github.repository }}
         with:
@@ -83,7 +83,7 @@ jobs:
 
       - name: Build and push docker image (full release)
         if: ${{ !contains(github.ref_name, 'rc') && !contains(github.ref_name, 'alpha') }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         env:
           IMAGE_TAG: ${{ inputs.imageTag || github.repository }}
         with:
