@@ -87,7 +87,7 @@ jobs:
         env:
           IMAGE_TAG: ${{ inputs.imageTag || github.repository }}
         with:
-          platforms: linux/arm64/v8,linux/amd64
+          platforms: linux/arm64,linux/amd64
           push: true
           tags: |
             ${{ env.IMAGE_TAG }}:${{ github.ref_name }}
