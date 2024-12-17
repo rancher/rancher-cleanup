@@ -17,6 +17,18 @@ This script will delete all Kubernetes resources belonging to/created by Rancher
 * Deploy the job using `kubectl create -f deploy/rancher-cleanup.yaml`
 * Watch logs using `kubectl  -n kube-system logs -l job-name=cleanup-job  -f`
 
+### How does it work?
+
+The Kubernetes Job created using the step above cleans up Kubernetes resources belonging to/created by Rancher in the following order:
+* Delete the deployments and daemonsets in `cattle-system` namespace. Before moving any further, it waits for pods in `cattle-system` namespace with label `app=rancher` to terminate.
+* Delete the ConfigMap `cattle-controllers` from the `kube-system` namespace. This is the only resource that's created outside a cattle namespace.
+* Delete any Mutating webhooks created by cattle. These webhooks have `cattle.io` in their name.
+* Delete any Validating webhooks created by cattle. These webhooks also have `cattle.io` in their name.
+* Delete any mutating and validating webhooks created by installation of Rancher Monitoring. These webhooks have `rancher-monitoring` in their name.
+* Delete any validating webhooks created by installation of Rancher Gatekeeper. These webhooks have `gatekeeper` in their name.
+* Delete any mutating and validating webhooks created by installation of Rancher Istio. These webhooks have `istio` in their name.
+
+Like this, it deletes bunch of other Kubernetes resources. For exhaustive list of resources, refer the [cleanup.sh](./cleanup.sh) script.
 
 ## Verify
 
