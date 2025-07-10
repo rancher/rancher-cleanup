@@ -101,7 +101,7 @@ fi
 set -x
 # Namespaces with resources that probably have finalizers/dependencies (needs manual traverse to patch and delete else it will hang)
 CATTLE_NAMESPACES="local cattle-system cattle-impersonation-system cattle-global-data cattle-global-nt cattle-provisioning-capi-system"
-TOOLS_NAMESPACES="istio-system cattle-resources-system cis-operator-system cattle-dashboards cattle-gatekeeper-system cattle-alerting cattle-logging cattle-pipeline cattle-prometheus rancher-operator-system cattle-monitoring-system cattle-logging-system cattle-elemental-system"
+TOOLS_NAMESPACES="cattle-resources-system cis-operator-system cattle-dashboards cattle-gatekeeper-system cattle-alerting cattle-logging cattle-pipeline cattle-prometheus rancher-operator-system cattle-monitoring-system cattle-logging-system cattle-elemental-system"
 FLEET_NAMESPACES="cattle-fleet-clusters-system cattle-fleet-local-system cattle-fleet-system fleet-default fleet-local fleet-system"
 
 # Delete rancher install to not have anything running that (re)creates resources
@@ -130,13 +130,13 @@ if kubectl get validatingwebhookconfigurations -o name | grep -q gatekeeper; the
     kcd "$(kubectl get validatingwebhookconfigurations -o name | grep gatekeeper)"
 fi
 
-# Delete any istio webhooks
-if kubectl get mutatingwebhookconfigurations -o name | grep -q istio;  then
-    kcd "$(kubectl get mutatingwebhookconfigurations -o name | grep istio)"
-fi
-if kubectl get validatingwebhookconfigurations -o name | grep -q istio; then
-    kcd "$(kubectl get validatingwebhookconfigurations -o name | grep istio)"
-fi
+## Delete any istio webhooks
+#if kubectl get mutatingwebhookconfigurations -o name | grep -q istio;  then
+#    kcd "$(kubectl get mutatingwebhookconfigurations -o name | grep istio)"
+#fi
+#if kubectl get validatingwebhookconfigurations -o name | grep -q istio; then
+#    kcd "$(kubectl get validatingwebhookconfigurations -o name | grep istio)"
+#fi
 
 # Cluster api
 if [ -n "$(kubectl get validatingwebhookconfiguration.admissionregistration.k8s.io/validating-webhook-configuration)" ]; then
@@ -188,10 +188,10 @@ kubectl get clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.nam
   kcd "clusterrolebindings ""$CRB"""
 done
 
-kubectl get clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^istio | while read -r CRB; do
-  kcpf clusterrolebindings "$CRB"
-  kcd "clusterrolebindings ""$CRB"""
-done
+#kubectl get clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^istio | while read -r CRB; do
+#  kcpf clusterrolebindings "$CRB"
+#  kcd "clusterrolebindings ""$CRB"""
+#done
 
 kubectl get clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^elemental | while read -r CRB; do
   kcpf clusterrolebindings "$CRB"
@@ -248,10 +248,10 @@ kubectl get clusterroles --no-headers -o custom-columns=NAME:.metadata.name | gr
   kcd "clusterroles ""$CR"""
 done
 
-kubectl get clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^istio | while read -r CR; do
-  kcpf clusterroles "$CR"
-  kcd "clusterroles ""$CR"""
-done
+#kubectl get clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^istio | while read -r CR; do
+#  kcpf clusterroles "$CR"
+#  kcd "clusterroles ""$CR"""
+#done
 
 kubectl get clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^elemental | while read -r CR; do
   kcpf clusterroles "$CR"
@@ -266,7 +266,7 @@ for CRD in $DATACRDS; do
 done
 
 # Delete apiservice
-for APISERVICE in $(kubectl  get apiservice -o name | grep cattle | grep -v k3s\.cattle\.io | grep -v helm\.cattle\.io) $(kubectl  get apiservice -o name | grep gatekeeper\.sh) $(kubectl  get apiservice -o name | grep istio\.io) $(kubectl  get apiservice elemental-operator) apiservice\.apiregistration\.k8s\.io\/v1beta1\.custom\.metrics\.k8s\.io; do
+for APISERVICE in $(kubectl  get apiservice -o name | grep cattle | grep -v k3s\.cattle\.io | grep -v helm\.cattle\.io) $(kubectl  get apiservice -o name | grep gatekeeper\.sh) $(kubectl  get apiservice elemental-operator) apiservice\.apiregistration\.k8s\.io\/v1beta1\.custom\.metrics\.k8s\.io; do
   kcd "$APISERVICE"
 done
 
@@ -298,11 +298,11 @@ if [ $? -ne 0 ]; then
     kcd "$PSP"
   done
 
-  # Istio
-  for PSP in istio-installer istio-psp kiali-psp psp-istio-cni; do
-    kcd "podsecuritypolicy $PSP"
-  done
-else 
+  ## Istio
+  #for PSP in istio-installer istio-psp kiali-psp psp-istio-cni; do
+  #  kcd "podsecuritypolicy $PSP"
+  #done
+else
   echo "Kubernetes version v1.25 or higher, skipping PSP removal"
 fi
 
@@ -360,10 +360,10 @@ kubectl get "$(kubectl api-resources --namespaced=false --verbs=delete -o name| 
   kcd "$NAME"
 done
 
-# Delete istio certs
-for NS in $(kubectl  get ns --no-headers -o custom-columns=NAME:.metadata.name); do
-  kcd "-n ${NS} configmap istio-ca-root-cert"
-done
+## Delete istio certs
+#for NS in $(kubectl  get ns --no-headers -o custom-columns=NAME:.metadata.name); do
+#  kcd "-n ${NS} configmap istio-ca-root-cert"
+#done
 
 # Delete all cattle namespaces, including project namespaces (p-),cluster (c-),cluster-fleet and user (user-) namespaces
 for NS in $TOOLS_NAMESPACES $FLEET_NAMESPACES $CATTLE_NAMESPACES; do
@@ -425,20 +425,20 @@ for CRD in $(kubectl get crd -o name | grep logging\.banzaicloud\.io); do
   kcd "$CRD"
 done
 
-# Delete monitoring CRDs
-for CRD in $(kubectl get crd -o name | grep monitoring\.coreos\.com); do
-  kcd "$CRD"
-done
+## Delete monitoring CRDs
+#for CRD in $(kubectl get crd -o name | grep monitoring\.coreos\.com); do
+#  kcd "$CRD"
+#done
 
 # Delete OPA CRDs
 for CRD in $(kubectl get crd -o name | grep gatekeeper\.sh); do
   kcd "$CRD"
 done
 
-# Delete Istio CRDs
-for CRD in $(kubectl get crd -o name | grep istio\.io); do
-  kcd "$CRD"
-done
+## Delete Istio CRDs
+#for CRD in $(kubectl get crd -o name | grep istio\.io); do
+#  kcd "$CRD"
+#done
 
 # Delete cluster-api CRDs
 for CRD in $(kubectl get crd -o name | grep cluster\.x-k8s\.io); do
