@@ -100,13 +100,20 @@ fi
 
 set -x
 # Namespaces with resources that probably have finalizers/dependencies (needs manual traverse to patch and delete else it will hang)
-CATTLE_NAMESPACES="local cattle-system cattle-impersonation-system cattle-global-data cattle-global-nt cattle-provisioning-capi-system"
+CATTLE_NAMESPACES="local zks-system zks-fleet-clusters-system zks-fleet-local-system zks-fleet-system zks-global-data zks-global-nt zks-impersonation-system zks-provisioning-capi-system zks-ui-plugin-system cattle-system cattle-impersonation-s
+ystem cattle-global-data cattle-global-nt cattle-provisioning-capi-system"
 TOOLS_NAMESPACES="istio-system cattle-resources-system cis-operator-system cattle-dashboards cattle-gatekeeper-system cattle-alerting cattle-logging cattle-pipeline cattle-prometheus rancher-operator-system cattle-monitoring-system cattle-logging-system cattle-elemental-system"
 FLEET_NAMESPACES="cattle-fleet-clusters-system cattle-fleet-local-system cattle-fleet-system fleet-default fleet-local fleet-system"
 
 # Delete rancher install to not have anything running that (re)creates resources
 kcd "-n cattle-system deploy,ds --all"
 kubectl -n cattle-system wait --for delete pod --selector=app=rancher
+
+kcd "-n zks-system deploy,ds --all"
+kubectl -n zks-system wait --for delete pod --selector=app=rancher
+
+
+
 # Delete the only resource not in cattle namespaces
 kcd "-n kube-system configmap cattle-controllers"
 
@@ -283,20 +290,41 @@ if [ $? -ne 0 ]; then
     kcd "$PSP"
   done
 
+  for PSP in $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/name=zks-logging) podsecuritypolicy.policy/zks-logging-rke-aggregator; do
+    kcd "$PSP"
+  done
+
   # Rancher monitoring
   for PSP in $(kubectl  get podsecuritypolicy -o name -l release=rancher-monitoring) $(kubectl get podsecuritypolicy -o name -l app=rancher-monitoring-crd-manager) $(kubectl get podsecuritypolicy -o name -l app=rancher-monitoring-patch-sa) $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/instance=rancher-monitoring); do
     kcd "$PSP"
   done
+
+  for PSP in $(kubectl  get podsecuritypolicy -o name -l release=zks-monitoring) $(kubectl get podsecuritypolicy -o name -l app=zks-monitoring-crd-manager) $(kubectl get podsecuritypolicy -o name -l app=zks-monitoring-patch-sa) $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/instance=zks-monitoring); do
+    kcd "$PSP"
+  done
+ 
+
+
 
   # Rancher OPA
   for PSP in $(kubectl  get podsecuritypolicy -o name -l release=rancher-gatekeeper) $(kubectl get podsecuritypolicy -o name -l app=rancher-gatekeeper-crd-manager); do
     kcd "$PSP"
   done
 
+  for PSP in $(kubectl  get podsecuritypolicy -o name -l release=zks-gatekeeper) $(kubectl get podsecuritypolicy -o name -l app=zks-gatekeeper-crd-manager); do
+    kcd "$PSP"
+  done
+
+
   # Backup restore operator
   for PSP in $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-backup); do
     kcd "$PSP"
   done
+
+  for PSP in $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/name=zks-backup); do
+    kcd "$PSP"
+  done
+
 
   # Istio
   for PSP in istio-installer istio-psp kiali-psp psp-istio-cni; do
@@ -309,6 +337,11 @@ fi
 # Get all namespaced resources and delete in loop
 # Exclude helm.cattle.io and k3s.cattle.io to not break K3S/RKE2 addons
 kubectl get "$(kubectl api-resources --namespaced=true --verbs=delete -o name| grep cattle\.io | grep -v helm\.cattle\.io | grep -v k3s\.cattle\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o custom-columns=NAME:.metadata.name,NAMESPACE:.metadata.namespace,KIND:.kind,APIVERSION:.apiVersion | while read -r NAME NAMESPACE KIND APIVERSION; do
+  kcpf -n "$NAMESPACE" "${KIND}.$(printapiversion "$APIVERSION")" "$NAME"
+  kcd "-n ""$NAMESPACE"" ${KIND}.$(printapiversion "$APIVERSION") ""$NAME"""
+done
+
+kubectl get "$(kubectl api-resources --namespaced=true --verbs=delete -o name| grep zks\.io | grep -v helm\.zks\.io | grep -v k3s\.zks\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o custom-columns=NAME:.metadata.name,NAMESPACE:.metadata.namespace,KIND:.kind,APIVERSION:.apiVersion | while read -r NAME NAMESPACE KIND APIVERSION; do
   kcpf -n "$NAMESPACE" "${KIND}.$(printapiversion "$APIVERSION")" "$NAME"
   kcd "-n ""$NAMESPACE"" ${KIND}.$(printapiversion "$APIVERSION") ""$NAME"""
 done
@@ -347,6 +380,12 @@ kubectl get "$(kubectl api-resources --namespaced=false --verbs=delete -o name| 
   kcpf "$NAME"
   kcd "$NAME"
 done
+
+kubectl get "$(kubectl api-resources --namespaced=false --verbs=delete -o name| grep zks\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o name | while read -r NAME; do
+  kcpf "$NAME"
+  kcd "$NAME"
+done
+
 
 # Logging
 kubectl get "$(kubectl api-resources --namespaced=false --verbs=delete -o name| grep logging\.banzaicloud\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o name | while read -r NAME; do

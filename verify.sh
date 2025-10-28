@@ -8,12 +8,13 @@ kcg()
   kubectl get --ignore-not-found=true "$@"
 }
 
-kcg -n cattle-system deploy,ds
+kcg -n zks-system deploy,ds
 kcg -n kube-system configmap cattle-controllers
 kcg mutatingwebhookconfigurations -o name | grep cattle\.io
 kcg mutatingwebhookconfigurations -o name | grep rancher-monitoring
 kcg mutatingwebhookconfigurations -o name | grep istio
 kcg mutatingwebhookconfigurations -o name | grep mutating-webhook-configuration
+
 
 kcg validatingwebhookconfigurations -o name | grep cattle\.io
 kcg validatingwebhookconfigurations -o name | grep rancher-monitoring
