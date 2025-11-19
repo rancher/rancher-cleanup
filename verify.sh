@@ -8,12 +8,13 @@ kcg()
   kubectl get --ignore-not-found=true "$@"
 }
 
-kcg -n cattle-system deploy,ds
+kcg -n zks-system deploy,ds
 kcg -n kube-system configmap cattle-controllers
 kcg mutatingwebhookconfigurations -o name | grep cattle\.io
 kcg mutatingwebhookconfigurations -o name | grep rancher-monitoring
 kcg mutatingwebhookconfigurations -o name | grep istio
 kcg mutatingwebhookconfigurations -o name | grep mutating-webhook-configuration
+
 
 kcg validatingwebhookconfigurations -o name | grep cattle\.io
 kcg validatingwebhookconfigurations -o name | grep rancher-monitoring
@@ -30,6 +31,7 @@ kcg apiservice -o name | grep elemental
 kcg clusterrolebinding -l cattle.io/creator=norman
 kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^cattle-
 kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep rancher 
+kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep zks
 kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^fleet-
 kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^gitjob
 kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^pod-impersonation-helm
@@ -41,6 +43,7 @@ kcg clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep
 kcg clusterroles -l cattle.io/creator=norman
 kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^cattle-
 kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep rancher
+kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep zks
 kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^fleet
 kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^gitjob
 kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^pod-impersonation-helm
@@ -57,7 +60,7 @@ kcg clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^elem
 kubectl get podsecuritypolicy > /dev/null 2>&1
 
 # Check the exit code and only run if there are psps available on the cluster
-if [ $? -ne 0 ]; then
+if [ $? -eq 0 ]; then
   echo "Checking for PSPs"
   kcg podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-logging
   kcg podsecuritypolicy.policy/rancher-logging-rke-aggregator
@@ -80,6 +83,7 @@ else
 fi
 
 kcg namespace -o name | grep "^cattle"
+kcg namespace -o name | grep "^zks"
 kcg namespace -o name | grep "rancher-operator-system"
 kcg namespace -o name | grep "cis-operator-system"
 kcg namespace -o name | grep "^c-"

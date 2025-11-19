@@ -1,21 +1,21 @@
-# Rancher resource cleanup script
+# ZKS resource cleanup script
 
 **Warning**
 ```
-THIS WILL DELETE ALL RESOURCES CREATED BY RANCHER
+THIS WILL DELETE ALL RESOURCES CREATED BY ZKS
 MAKE SURE YOU HAVE CREATED AND TESTED YOUR BACKUPS
 THIS IS A NON REVERSIBLE ACTION
 ```
 
-This script will delete all Kubernetes resources belonging to/created by Rancher (including installed tools like logging/monitoring/opa gatekeeper/etc). Note: this does not remove any Longhorn resources.
+This script will delete all Kubernetes resources belonging to/created by ZKS (including installed tools like logging/monitoring/opa gatekeeper/etc). Note: this does not remove any Longhorn resources.
 
 
 ## Using the cleanup script
 
 ### Run as a Kubernetes Job
 
-* Deploy the job using `kubectl create -f deploy/rancher-cleanup.yaml`
-* Watch logs using `kubectl  -n kube-system logs -l job-name=cleanup-job  -f`
+* Deploy the job using `kubectl create -f deploy/zks-cleanup.yaml`
+* Watch logs using `kubectl  -n kube-system logs -l job-name=zks-cleanup-job  -f`
 
 
 ## Verify

@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: verify
-        image: rancher/rancher-cleanup:latest
+        image: zededa/zks-cleanup:latest
         command: [ "verify.sh" ]
         imagePullPolicy: Always
       serviceAccountName: cleanup-service-account

@@ -89,6 +89,19 @@ kcdns()
   fi
 }
 
+# namespace might be gone, but its resources might still exist - clean them up
+clean_cm_sa()
+{
+    i="0"
+    while [ $i -lt 4 ]; do
+      # we do not cleanup clusterroles - we don't want global cluster admin to be wiped out
+      if timeout 21 sh -c  'kubectl delete -n '"$1"' cm,sa --all'; then 
+        break
+      fi
+      i=$((i+1))
+    done
+}
+
 printapiversion()
 {
 if echo "$1" | grep -q '/'; then
@@ -100,13 +113,19 @@ fi
 
 set -x
 # Namespaces with resources that probably have finalizers/dependencies (needs manual traverse to patch and delete else it will hang)
-CATTLE_NAMESPACES="local cattle-system cattle-impersonation-system cattle-global-data cattle-global-nt cattle-provisioning-capi-system"
+CATTLE_NAMESPACES="local zks-system zks-global-data zks-global-nt zks-impersonation-system zks-provisioning-capi-system zks-ui-plugin-system cattle-system cattle-impersonation-system cattle-global-data cattle-global-nt cattle-provisioning-capi-system"
 TOOLS_NAMESPACES="istio-system cattle-resources-system cis-operator-system cattle-dashboards cattle-gatekeeper-system cattle-alerting cattle-logging cattle-pipeline cattle-prometheus rancher-operator-system cattle-monitoring-system cattle-logging-system cattle-elemental-system"
-FLEET_NAMESPACES="cattle-fleet-clusters-system cattle-fleet-local-system cattle-fleet-system fleet-default fleet-local fleet-system"
+FLEET_NAMESPACES="zks-fleet-clusters-system zks-fleet-local-system zks-fleet-system cattle-fleet-clusters-system cattle-fleet-local-system cattle-fleet-system fleet-default fleet-local fleet-system"
 
 # Delete rancher install to not have anything running that (re)creates resources
 kcd "-n cattle-system deploy,ds --all"
 kubectl -n cattle-system wait --for delete pod --selector=app=rancher
+
+kcd "-n zks-system deploy,ds --all"
+kubectl -n zks-system wait --for delete pod --selector=app=zks
+
+
+
 # Delete the only resource not in cattle namespaces
 kcd "-n kube-system configmap cattle-controllers"
 
@@ -158,7 +177,17 @@ kubectl get clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.nam
   kcd "clusterrolebindings ""$CRB"""
 done
 
+kubectl get clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep ^zks- | while read -r CRB; do
+  kcpf clusterrolebindings "$CRB"
+  kcd "clusterrolebindings ""$CRB"""
+done
+
 kubectl get clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep rancher | while read -r CRB; do
+  kcpf clusterrolebindings "$CRB"
+  kcd "clusterrolebindings ""$CRB"""
+done
+
+kubectl get clusterrolebinding --no-headers -o custom-columns=NAME:.metadata.name | grep zks | while read -r CRB; do
   kcpf clusterrolebindings "$CRB"
   kcd "clusterrolebindings ""$CRB"""
 done
@@ -208,7 +237,17 @@ kubectl get clusterroles --no-headers -o custom-columns=NAME:.metadata.name | gr
   kcd "clusterroles ""$CR"""
 done
 
+kubectl get clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep ^zks- | while read -r CR; do
+  kcpf clusterroles "$CR"
+  kcd "clusterroles ""$CR"""
+done
+
 kubectl get clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep rancher | while read -r CR; do
+  kcpf clusterroles "$CR"
+  kcd "clusterroles ""$CR"""
+done
+
+kubectl get clusterroles --no-headers -o custom-columns=NAME:.metadata.name | grep zks | while read -r CR; do
   kcpf clusterroles "$CR"
   kcd "clusterroles ""$CR"""
 done
@@ -270,16 +309,24 @@ for APISERVICE in $(kubectl  get apiservice -o name | grep cattle | grep -v k3s\
   kcd "$APISERVICE"
 done
 
+for APISERVICE in $(kubectl  get apiservice -o name | grep zks| grep -v k3s\.cattle\.io | grep -v helm\.cattle\.io) $(kubectl  get apiservice -o name | grep gatekeeper\.sh) $(kubectl  get apiservice -o name | grep istio\.io) $(kubectl  get apiservice -o name | grep elemental-operator) apiservice\.apiregistration\.k8s\.io\/v1beta1\.custom\.metrics\.k8s\.io; do
+  kcd "$APISERVICE"
+done
+
 # Pod security policies
 #Check if psps are available on the target cluster
 kubectl get podsecuritypolicy > /dev/null 2>&1
 
 # Check the exit code and only run if there are psps available on the cluster
-if [ $? -ne 0 ]; then
+if [ $? -eq 0 ]; then
   echo "Removing PSPs"
 
   # Rancher logging
   for PSP in $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-logging) podsecuritypolicy.policy/rancher-logging-rke-aggregator; do
+    kcd "$PSP"
+  done
+
+  for PSP in $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/name=zks-logging) podsecuritypolicy.policy/zks-logging-rke-aggregator; do
     kcd "$PSP"
   done
 
@@ -288,13 +335,25 @@ if [ $? -ne 0 ]; then
     kcd "$PSP"
   done
 
+  for PSP in $(kubectl  get podsecuritypolicy -o name -l release=zks-monitoring) $(kubectl get podsecuritypolicy -o name -l app=zks-monitoring-crd-manager) $(kubectl get podsecuritypolicy -o name -l app=zks-monitoring-patch-sa) $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/instance=zks-monitoring); do
+    kcd "$PSP"
+  done
+
   # Rancher OPA
   for PSP in $(kubectl  get podsecuritypolicy -o name -l release=rancher-gatekeeper) $(kubectl get podsecuritypolicy -o name -l app=rancher-gatekeeper-crd-manager); do
     kcd "$PSP"
   done
 
+  for PSP in $(kubectl  get podsecuritypolicy -o name -l release=zks-gatekeeper) $(kubectl get podsecuritypolicy -o name -l app=zks-gatekeeper-crd-manager); do
+    kcd "$PSP"
+  done
+
   # Backup restore operator
   for PSP in $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/name=rancher-backup); do
+    kcd "$PSP"
+  done
+
+  for PSP in $(kubectl get podsecuritypolicy -o name -l app.kubernetes.io/name=zks-backup); do
     kcd "$PSP"
   done
 
@@ -309,6 +368,11 @@ fi
 # Get all namespaced resources and delete in loop
 # Exclude helm.cattle.io and k3s.cattle.io to not break K3S/RKE2 addons
 kubectl get "$(kubectl api-resources --namespaced=true --verbs=delete -o name| grep cattle\.io | grep -v helm\.cattle\.io | grep -v k3s\.cattle\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o custom-columns=NAME:.metadata.name,NAMESPACE:.metadata.namespace,KIND:.kind,APIVERSION:.apiVersion | while read -r NAME NAMESPACE KIND APIVERSION; do
+  kcpf -n "$NAMESPACE" "${KIND}.$(printapiversion "$APIVERSION")" "$NAME"
+  kcd "-n ""$NAMESPACE"" ${KIND}.$(printapiversion "$APIVERSION") ""$NAME"""
+done
+
+kubectl get "$(kubectl api-resources --namespaced=true --verbs=delete -o name| grep zks\.io | grep -v helm\.zks\.io | grep -v k3s\.zks\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o custom-columns=NAME:.metadata.name,NAMESPACE:.metadata.namespace,KIND:.kind,APIVERSION:.apiVersion | while read -r NAME NAMESPACE KIND APIVERSION; do
   kcpf -n "$NAMESPACE" "${KIND}.$(printapiversion "$APIVERSION")" "$NAME"
   kcd "-n ""$NAMESPACE"" ${KIND}.$(printapiversion "$APIVERSION") ""$NAME"""
 done
@@ -348,6 +412,11 @@ kubectl get "$(kubectl api-resources --namespaced=false --verbs=delete -o name| 
   kcd "$NAME"
 done
 
+kubectl get "$(kubectl api-resources --namespaced=false --verbs=delete -o name| grep zks\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o name | while read -r NAME; do
+  kcpf "$NAME"
+  kcd "$NAME"
+done
+
 # Logging
 kubectl get "$(kubectl api-resources --namespaced=false --verbs=delete -o name| grep logging\.banzaicloud\.io | tr "\n" "," | sed -e 's/,$//')" -A --no-headers -o name | while read -r NAME; do
   kcpf "$NAME"
@@ -373,6 +442,7 @@ for NS in $TOOLS_NAMESPACES $FLEET_NAMESPACES $CATTLE_NAMESPACES; do
   done
 
   kcdns "$NS"
+  clean_cm_sa "$NS"
 done
 
 for NS in $(kubectl get namespace --no-headers -o custom-columns=NAME:.metadata.name | grep "^cluster-fleet"); do
@@ -382,8 +452,10 @@ for NS in $(kubectl get namespace --no-headers -o custom-columns=NAME:.metadata.
   done
 
   kcdns "$NS"
+  clean_cm_sa "$NS"
 done
 
+# Delete projects
 for NS in $(kubectl get namespace --no-headers -o custom-columns=NAME:.metadata.name | grep "^p-"); do
   kubectl get "$(kubectl api-resources --namespaced=true --verbs=delete -o name| grep -v events\.events\.k8s\.io | grep -v ^events$ | tr "\n" "," | sed -e 's/,$//')" -n "$NS" --no-headers -o custom-columns=NAME:.metadata.name,NAMESPACE:.metadata.namespace,KIND:.kind,APIVERSION:.apiVersion | while read -r NAME NAMESPACE KIND APIVERSION; do
     kcpf -n "$NAMESPACE" "${KIND}.$(printapiversion "$APIVERSION")" "$NAME"
@@ -391,8 +463,10 @@ for NS in $(kubectl get namespace --no-headers -o custom-columns=NAME:.metadata.
   done
 
   kcdns "$NS"
+  clean_cm_sa "$NS"
 done
 
+# Delete clusters
 for NS in $(kubectl get namespace --no-headers -o custom-columns=NAME:.metadata.name | grep "^c-"); do
   kubectl get "$(kubectl api-resources --namespaced=true --verbs=delete -o name| grep -v events\.events\.k8s\.io | grep -v ^events$ | tr "\n" "," | sed -e 's/,$//')" -n "$NS" --no-headers -o custom-columns=NAME:.metadata.name,NAMESPACE:.metadata.namespace,KIND:.kind,APIVERSION:.apiVersion | while read -r NAME NAMESPACE KIND APIVERSION; do
     kcpf -n "$NAMESPACE" "${KIND}.$(printapiversion "$APIVERSION")" "$NAME"
@@ -400,6 +474,7 @@ for NS in $(kubectl get namespace --no-headers -o custom-columns=NAME:.metadata.
   done
 
   kcdns "$NS"
+  clean_cm_sa "$NS"
 done
 
 for NS in $(kubectl get namespace --no-headers -o custom-columns=NAME:.metadata.name | grep "^user-"); do
@@ -418,6 +493,12 @@ for NS in $(kubectl get namespace --no-headers -o custom-columns=NAME:.metadata.
   done
 
   kcdns "$NS"
+done
+
+# final cleanup - delete any orphaned resources
+for NS in $TOOLS_NAMESPACES $FLEET_NAMESPACES $CATTLE_NAMESPACES; do 
+  kcdns "$NS"
+  clean_cm_sa "$NS" 
 done
 
 # Delete logging CRDs
