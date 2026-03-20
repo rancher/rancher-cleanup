@@ -100,7 +100,7 @@ fi
 
 set -x
 # Namespaces with resources that probably have finalizers/dependencies (needs manual traverse to patch and delete else it will hang)
-CATTLE_NAMESPACES="local cattle-system cattle-impersonation-system cattle-global-data cattle-global-nt cattle-provisioning-capi-system"
+CATTLE_NAMESPACES="local cattle-system cattle-impersonation-system cattle-global-data cattle-global-nt cattle-provisioning-capi-system cattle-turtles-system cattle-capi-system"
 TOOLS_NAMESPACES="istio-system cattle-resources-system cis-operator-system cattle-dashboards cattle-gatekeeper-system cattle-alerting cattle-logging cattle-pipeline cattle-prometheus rancher-operator-system cattle-monitoring-system cattle-logging-system cattle-elemental-system"
 FLEET_NAMESPACES="cattle-fleet-clusters-system cattle-fleet-local-system cattle-fleet-system fleet-default fleet-local fleet-system"
 
@@ -136,6 +136,14 @@ if kubectl get mutatingwebhookconfigurations -o name | grep -q istio;  then
 fi
 if kubectl get validatingwebhookconfigurations -o name | grep -q istio; then
     kcd "$(kubectl get validatingwebhookconfigurations -o name | grep istio)"
+fi
+
+# Delete any capi webhooks
+if kubectl get mutatingwebhookconfigurations -o name | grep -q capi;  then
+    kcd "$(kubectl get mutatingwebhookconfigurations -o name | grep capi)"
+fi
+if kubectl get validatingwebhookconfigurations -o name | grep -q capi; then
+    kcd "$(kubectl get validatingwebhookconfigurations -o name | grep capi)"
 fi
 
 # Cluster api
