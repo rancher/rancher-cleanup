@@ -16,7 +16,7 @@ if [ -z "$GH_REPO" ]; then
 fi
 
 # create checksum file
-CHECKSUM_FILE='sha256sum-amd64.txt'
+CHECKSUM_FILE='checksums.txt'
 sha256sum cleanup.sh > $CHECKSUM_FILE
 sha256sum cleanup.sh verify.sh > $CHECKSUM_FILE
 
