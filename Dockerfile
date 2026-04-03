@@ -1,4 +1,4 @@
-FROM registry.suse.com/bci/bci-base:15.5.36.5.47
+FROM registry.suse.com/bci/bci-base:15.7
 
 ENV KUBECTL_VERSION=v1.30.14
 ENV KUBECTL_SUM_AMD64=7ccac981ece0098284d8961973295f5124d78eab7b89ba5023f35591baa16271
