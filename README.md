@@ -17,6 +17,24 @@ This script will delete all Kubernetes resources belonging to/created by Rancher
 * Deploy the job using `kubectl create -f deploy/rancher-cleanup.yaml`
 * Watch logs using `kubectl  -n kube-system logs -l job-name=cleanup-job  -f`
 
+### Excluding namespaces
+
+Some namespaces in the default lists (such as `istio-system`) may also host non-Rancher workloads. Set the `EXCLUDE_NAMESPACES` environment variable to a space-separated list of namespaces that should be skipped during cleanup:
+
+```
+EXCLUDE_NAMESPACES="istio-system" bash cleanup.sh
+```
+
+When running as a Kubernetes Job, add it to the container `env`:
+
+```yaml
+env:
+  - name: EXCLUDE_NAMESPACES
+    value: "istio-system"
+```
+
+Excluded namespaces are removed from `CATTLE_NAMESPACES`, `TOOLS_NAMESPACES`, and `FLEET_NAMESPACES` before deletion.
+
 
 ## Verify
 

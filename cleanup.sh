@@ -104,6 +104,19 @@ CATTLE_NAMESPACES="local cattle-system cattle-impersonation-system cattle-global
 TOOLS_NAMESPACES="istio-system cattle-resources-system cis-operator-system cattle-dashboards cattle-gatekeeper-system cattle-alerting cattle-logging cattle-pipeline cattle-prometheus rancher-operator-system cattle-monitoring-system cattle-logging-system cattle-elemental-system"
 FLEET_NAMESPACES="cattle-fleet-clusters-system cattle-fleet-local-system cattle-fleet-system fleet-default fleet-local fleet-system"
 
+# Optional: exclude specific namespaces from cleanup. Space-separated list via env var.
+# Useful when a default namespace (e.g. istio-system) is shared with non-Rancher workloads.
+# Example: EXCLUDE_NAMESPACES="istio-system" bash cleanup.sh
+EXCLUDE_NAMESPACES="${EXCLUDE_NAMESPACES:-}"
+if [ -n "$EXCLUDE_NAMESPACES" ]; then
+  for excl in $EXCLUDE_NAMESPACES; do
+    CATTLE_NAMESPACES=$(echo "$CATTLE_NAMESPACES" | tr ' ' '\n' | grep -vx "$excl" | tr '\n' ' ')
+    TOOLS_NAMESPACES=$(echo "$TOOLS_NAMESPACES" | tr ' ' '\n' | grep -vx "$excl" | tr '\n' ' ')
+    FLEET_NAMESPACES=$(echo "$FLEET_NAMESPACES" | tr ' ' '\n' | grep -vx "$excl" | tr '\n' ' ')
+  done
+  echo "Excluded namespaces from cleanup: ${EXCLUDE_NAMESPACES}"
+fi
+
 # Delete rancher install to not have anything running that (re)creates resources
 kcd "-n cattle-system deploy,ds --all"
 kubectl -n cattle-system wait --for delete pod --selector=app=rancher
