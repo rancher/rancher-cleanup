@@ -1,6 +1,6 @@
 {
-  "extends": ["github>rancher/renovate-config#release"],
-  "baseBranches": ["main"],
+  "extends": ["github>rancher/renovate-config//default#release"],
+  "baseBranchPatterns": ["main"],
   "packageRules": [
     {
       "matchDepNames": [
